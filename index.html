@@ -129,6 +129,10 @@ body{
   border:1px solid var(--line);border-radius:var(--r);
 }
 .ratio span{flex:none;color:var(--steel);}
+.slide{margin-bottom:.7rem;}
+.slide label{display:block;margin-bottom:.3rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em;}
+.slide input[type=range]{width:100%;min-height:2.5rem;accent-color:var(--cut);}
+.waste{position:absolute;background:rgba(27,39,51,.55);pointer-events:none;}
 .hint{margin:.8rem 0 0;font-size:.8rem;line-height:1.8;color:var(--steel);letter-spacing:.02em;}
 .hint b{color:var(--ink);font-weight:500;}
 
@@ -255,13 +259,16 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     </div>
     <p class="hint" id="frameNote">Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。</p>
 
-    <h2>切り口</h2>
-    <div class="choices">
-      <label class="choice on"><input type="radio" name="trim" value="exact" checked>
-        <span><b>ぴったり等分</b><em>端数が出たら1pxだけ調整。画像を縮めないので画質はそのまま</em></span></label>
-      <label class="choice"><input type="radio" name="trim" value="crop">
-        <span><b>全部を同じサイズに</b><em>端数を切り落として、すべて完全に同じ寸法にそろえます</em></span></label>
+    <h2>切れ目の位置</h2>
+    <div id="offYBox" class="slide">
+      <label for="offY">上下にずらす</label>
+      <input type="range" id="offY" min="0" max="100" value="50">
     </div>
+    <div id="offXBox" class="slide">
+      <label for="offX">左右にずらす</label>
+      <input type="range" id="offX" min="0" max="100" value="50">
+    </div>
+    <p class="hint" id="offNote"></p>
 
     <h2>保存形式</h2>
     <div class="choices">
@@ -348,11 +355,11 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     $("cols").disabled=(p==="article");
     if(p==="free"){$("rows").disabled=false;$("cols").disabled=false;}
     showFrame(true);
-    updateHint(); drawLines();
+    updateHint(); drawLines(); updateOffset();
   }
   $("presets").addEventListener("change",applyPreset);
-  $("rows").addEventListener("change",function(){updateHint();drawLines();});
-  $("cols").addEventListener("change",function(){updateHint();drawLines();});
+  $("rows").addEventListener("change",function(){updateHint();drawLines();updateOffset();});
+  $("cols").addEventListener("change",function(){updateHint();drawLines();updateOffset();});
   $("fw").addEventListener("input",updateHint);
   $("fh").addEventListener("input",updateHint);
 
@@ -368,7 +375,8 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 
     var pw = stacked ? 1536 : 1080;
     var ph = Math.round(pw/ratio);
-    var t = "元画像のおすすめ："+(pw*c)+" × "+(ph*r)+" px。1枚あたり "+pw+" × "+ph+" px になります。";
+    var slack=Math.round(ph*0.5);
+    var t = "元画像のおすすめ："+(pw*c)+" × "+(ph*r+slack)+" px。1枚あたり "+pw+" × "+ph+" px、余った "+slack+"px が切れ目を動かすための「のりしろ」になります。";
 
     if(stacked){
       var tall=(ph*r)/pw;
@@ -431,7 +439,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
       cutButtons().forEach(function(b){b.disabled=false;});
       $("srcInfo").textContent="読み込んだ画像："+el.naturalWidth+" × "+el.naturalHeight+" px";
       updateHint();
-      setTimeout(drawLines,60);
+      setTimeout(function(){drawLines();updateOffset();},60);
     };
     el.onerror=function(){
       $("srcInfo").innerHTML='<span class="err">この画像は読み込めませんでした。別のファイルで試してください。</span>';
@@ -441,25 +449,46 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 
   /* 裁断線 */
   function drawLines(){
-    var frame=$("frame"), old=frame.querySelectorAll(".cutline,.tag");
+    var frame=$("frame"), old=frame.querySelectorAll(".cutline,.tag,.waste");
     for(var i=0;i<old.length;i++){old[i].remove();}
     if(!img)return;
-    var r=rows(), c=cols(), n=1, y, x;
-    for(y=1;y<r;y++){
-      var h=document.createElement("div");
-      h.className="cutline h"; h.style.top=(y/r*100)+"%"; frame.appendChild(h);
+    var W=img.naturalWidth, H=img.naturalHeight, a=axes();
+    var r=rows(), c=cols(), n=1, y, x, el;
+
+    function pct(v,total){return (v/total*100)+"%";}
+
+    /* 捨てる部分に薄い覆いをかける */
+    if(a.y.start>0){
+      el=document.createElement("div"); el.className="waste";
+      el.style.cssText="left:0;right:0;top:0;height:"+pct(a.y.start,H); frame.appendChild(el);
     }
-    for(x=1;x<c;x++){
-      var v=document.createElement("div");
-      v.className="cutline v"; v.style.left=(x/c*100)+"%"; frame.appendChild(v);
+    if(a.y.arr[r]<H){
+      el=document.createElement("div"); el.className="waste";
+      el.style.cssText="left:0;right:0;bottom:0;height:"+pct(H-a.y.arr[r],H); frame.appendChild(el);
+    }
+    if(a.x.start>0){
+      el=document.createElement("div"); el.className="waste";
+      el.style.cssText="top:0;bottom:0;left:0;width:"+pct(a.x.start,W); frame.appendChild(el);
+    }
+    if(a.x.arr[c]<W){
+      el=document.createElement("div"); el.className="waste";
+      el.style.cssText="top:0;bottom:0;right:0;width:"+pct(W-a.x.arr[c],W); frame.appendChild(el);
+    }
+
+    for(y=0;y<=r;y++){
+      el=document.createElement("div"); el.className="cutline h";
+      el.style.top=pct(a.y.arr[y],H); frame.appendChild(el);
+    }
+    for(x=0;x<=c;x++){
+      el=document.createElement("div"); el.className="cutline v";
+      el.style.left=pct(a.x.arr[x],W); frame.appendChild(el);
     }
     for(y=0;y<r;y++){
       for(x=0;x<c;x++){
-        var t=document.createElement("div");
-        t.className="tag"; t.textContent=n++;
-        t.style.top="calc("+(y/r*100)+"% + .4rem)";
-        t.style.left="calc("+(x/c*100)+"% + .4rem)";
-        frame.appendChild(t);
+        el=document.createElement("div"); el.className="tag"; el.textContent=n++;
+        el.style.top="calc("+pct(a.y.arr[y],H)+" + .4rem)";
+        el.style.left="calc("+pct(a.x.arr[x],W)+" + .4rem)";
+        frame.appendChild(el);
       }
     }
   }
@@ -470,22 +499,53 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     b.addEventListener("click",function(){ if(img){cut();} });
   });
 
-  function bounds(total,n,mode){
-    var a=[],i;
-    if(mode==="crop"){
-      var s=Math.floor(total/n);
-      for(i=0;i<=n;i++){a.push(i*s);}
-    }else{
-      for(i=0;i<=n;i++){a.push(Math.round(i*total/n));}
-    }
-    return a;
+  function offVal(id){ return parseInt($(id).value,10)||0; }
+
+  /* 1枚ぶんの大きさは「比率」で決める。余った分がのりしろになり、そこを動かせる */
+  function axes(){
+    if(!img)return null;
+    var W=img.naturalWidth, H=img.naturalHeight, c=cols(), r=rows();
+    var pw=Math.floor(W/c), ratio=frameRatio();
+    var ph = ratio ? Math.round(pw/ratio) : Math.floor(H/r);
+    var fit = (ph*r<=H);
+    if(!fit){ ph=Math.floor(H/r); }
+    var xs=[], ys=[], i;
+    var xSlack=W-pw*c, ySlack=H-ph*r;
+    var x0=Math.round(xSlack*offVal("offX")/100), y0=Math.round(ySlack*offVal("offY")/100);
+    for(i=0;i<=c;i++){xs.push(x0+i*pw);}
+    for(i=0;i<=r;i++){ys.push(y0+i*ph);}
+    return {
+      x:{arr:xs,size:pw,slack:xSlack,start:x0},
+      y:{arr:ys,size:ph,slack:ySlack,start:y0},
+      fit:fit
+    };
   }
 
+  function updateOffset(){
+    var r=rows(), c=cols();
+    $("offYBox").style.display = "";
+    $("offXBox").style.display = (c>1) ? "" : "none";
+    if(!img){ $("offNote").textContent="画像を読み込むと、動かせる幅が表示されます。"; return; }
+    var a=axes(), parts=[];
+    parts.push("1枚あたり "+a.x.size+" × "+a.y.size+" px。すべて同じ大きさです");
+    if(!a.fit){
+      parts.push("画像の縦が足りないので、比率どおりには切れていません。元画像をもっと縦長にしてください");
+    }else{
+      parts.push(a.y.slack>0
+        ? "上下ののりしろは "+a.y.slack+"px（今は上を "+a.y.start+"px 捨てています）"
+        : "のりしろがないので動かせません。元画像の縦をあと少し大きくしてください");
+    }
+    if(c>1 && a.x.slack>0){ parts.push("左右ののりしろは "+a.x.slack+"px"); }
+    $("offNote").textContent=parts.join("。")+"。";
+  }
+  $("offY").addEventListener("input",function(){drawLines();updateOffset();});
+  $("offX").addEventListener("input",function(){drawLines();updateOffset();});
+
   function cut(){
-    var r=rows(), c=cols(), fmt=picked("fmt","png"), mode=picked("trim","exact");
+    var r=rows(), c=cols(), fmt=picked("fmt","png");
     var mime = fmt==="png" ? "image/png" : "image/jpeg";
     var ext  = fmt==="png" ? "png" : "jpg";
-    var xs=bounds(img.naturalWidth,c,mode), ys=bounds(img.naturalHeight,r,mode);
+    var a=axes(), xs=a.x.arr, ys=a.y.arr;
 
     pieces=[]; $("pieces").innerHTML=""; $("output").classList.remove("hidden");
     var index=0, total=r*c, done=0;
