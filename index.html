@@ -122,6 +122,13 @@ body{
   border:1px solid var(--line);border-radius:var(--r);
 }
 .stepper select:disabled{color:var(--steel);background:var(--paper);}
+.ratio{display:flex;align-items:center;gap:.6rem;}
+.ratio input{
+  width:100%;min-height:2.9rem;padding:.55rem .6rem;
+  font:inherit;font-size:1rem;text-align:center;color:var(--ink);background:#fff;
+  border:1px solid var(--line);border-radius:var(--r);
+}
+.ratio span{flex:none;color:var(--steel);}
 .hint{margin:.8rem 0 0;font-size:.8rem;line-height:1.8;color:var(--steel);letter-spacing:.02em;}
 .hint b{color:var(--ink);font-weight:500;}
 
@@ -225,10 +232,10 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     <div class="choices" id="presets">
       <label class="choice on"><input type="radio" name="preset" value="article" checked>
         <span><b>X記事に縦つなぎ</b><em>縦に等分。記事の中では画像が縦に積まれるので、上下がつながって見えます</em></span></label>
-      <label class="choice"><input type="radio" name="preset" value="grid4">
-        <span><b>Xの通常ポスト・4枚</b><em>2×2に分割。タイムラインの4枚並びが1枚の絵になります</em></span></label>
+      <label class="choice"><input type="radio" name="preset" value="post4">
+        <span><b>Xの通常ポスト・4枚</b><em>横に4等分。タイムラインで4枚が横に並ぶので、左から順に1枚の絵になります</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="pair">
-        <span><b>Xの通常ポスト・2枚</b><em>左右に2分割。2枚並びが1枚の絵になります</em></span></label>
+        <span><b>Xの通常ポスト・2枚</b><em>横に2等分。2枚が横に並びます</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="free">
         <span><b>自由に決める</b><em>縦と横の枚数を自分で指定します</em></span></label>
     </div>
@@ -239,6 +246,14 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
       <div class="stepper"><label for="cols">横に何枚</label><select id="cols"></select></div>
     </div>
     <p class="hint" id="sizeHint"></p>
+
+    <h2 id="frameHead">1枚ぶんの表示枠</h2>
+    <div class="ratio" id="frameBox">
+      <input type="number" id="fw" min="1" step="1" inputmode="numeric" aria-label="枠の横の比率">
+      <span>：</span>
+      <input type="number" id="fh" min="1" step="1" inputmode="numeric" aria-label="枠の縦の比率">
+    </div>
+    <p class="hint" id="frameNote">Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。</p>
 
     <h2>切り口</h2>
     <div class="choices">
@@ -312,32 +327,68 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   function rows(){return parseInt($("rows").value,10);}
   function cols(){return parseInt($("cols").value,10);}
 
+  function frameRatio(){
+    var w=parseFloat($("fw").value), h=parseFloat($("fh").value);
+    if(!(w>0)||!(h>0))return null;
+    return w/h;
+  }
+  function showFrame(on){
+    ["frameHead","frameBox","frameNote"].forEach(function(id){
+      $(id).style.display = on ? "" : "none";
+    });
+  }
+  function setFrame(w,h){ $("fw").value=w; $("fh").value=h; }
+
   function applyPreset(){
     var p=picked("preset","article");
-    if(p==="article"){$("rows").value=4;$("cols").value=1;}
-    if(p==="grid4"){$("rows").value=2;$("cols").value=2;}
-    if(p==="pair"){$("rows").value=1;$("cols").value=2;}
-    $("rows").disabled=(p==="pair");
+    if(p==="article"){$("rows").value=4;$("cols").value=1;setFrame(3,1);}
+    if(p==="post4"){$("rows").value=1;$("cols").value=4;setFrame(9,16);}
+    if(p==="pair"){$("rows").value=1;$("cols").value=2;setFrame(9,16);}
+    $("rows").disabled=(p==="post4"||p==="pair");
     $("cols").disabled=(p==="article");
     if(p==="free"){$("rows").disabled=false;$("cols").disabled=false;}
+    showFrame(true);
     updateHint(); drawLines();
   }
   $("presets").addEventListener("change",applyPreset);
   $("rows").addEventListener("change",function(){updateHint();drawLines();});
   $("cols").addEventListener("change",function(){updateHint();drawLines();});
+  $("fw").addEventListener("input",updateHint);
+  $("fh").addEventListener("input",updateHint);
 
   function updateHint(){
-    var p=picked("preset","article"), t="";
-    if(p==="article"){
-      t="元画像のおすすめ：横1536pxなら縦は "+(1536*rows())+"px。1枚ずつが正方形になり、記事の中できれいに積み上がります。";
-    }else if(p==="grid4"){
-      t="元画像のおすすめ：16:9の横長（例 1920×1080）。タイムラインの4枚並びに近い比率なので、余計な切り取りが起きにくくなります。";
-    }else if(p==="pair"){
-      t="元画像のおすすめ：16:9の横長（例 1920×1080）。左右半分ずつが2枚並びの枠にほぼ収まります。";
+    var p=picked("preset","article"), r=rows(), c=cols(), stacked=(c===1);
+    $("frameHead").textContent = stacked ? "1枚ぶんの形" : "1枚ぶんの表示枠";
+    $("frameNote").textContent = stacked
+      ? "記事やnoteでは画像が上から順に積まれます。1枚ぶんを横長の帯にすると全体が短くまとまり、スクロールが減ります。縦長にするほど記事は長くなります。"
+      : "Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。";
+
+    var ratio=frameRatio();
+    if(!ratio){ $("sizeHint").textContent="1枚ぶんの比率を数字で入れてください。"; return; }
+
+    var pw = stacked ? 1536 : 1080;
+    var ph = Math.round(pw/ratio);
+    var t = "元画像のおすすめ："+(pw*c)+" × "+(ph*r)+" px。1枚あたり "+pw+" × "+ph+" px になります。";
+
+    if(stacked){
+      var tall=(ph*r)/pw;
+      t += " "+r+"枚積むと全体の高さは横幅の約"+tall.toFixed(1)+"倍。";
+      t += (tall<=1.6) ? "スクロールなしで見渡せる長さです。"
+         : (tall<=2.5) ? "少しスクロールが必要です。"
+         : "かなり長くなります。1枚ぶんをもっと横長（例 3:1）にすると収まります。";
+      t += " 画像と画像の間にはキャプション欄のすき間が入るので、顔や手が境界をまたぐと分断されて見えます。帯1枚の中に顔が収まる構図にしてください。";
     }else{
-      t="縦"+rows()+"枚 × 横"+cols()+"枚 ＝ 合計"+(rows()*cols())+"枚に切ります。";
+      if(img){
+        var aw=img.naturalWidth/c, ah=img.naturalHeight/r, a=aw/ah, cut, dir;
+        if(a>ratio){cut=1-ratio/a;dir="左右";}else{cut=1-a/ratio;dir="上下";}
+        var pct=Math.round(cut*100);
+        t += (pct<2)
+          ? " 今の画像は枠にほぼぴったりです。"
+          : " 今の画像は1枚あたり "+Math.round(aw)+" × "+Math.round(ah)+" px。枠とズレているので、Xの表示では"+dir+"が約"+pct+"%切り取られる可能性があります。";
+      }
+      t += " 切れ目が顔・首・関節に来ないよう、髪や無地の服、肌の広い面に破線が乗る構図にしてください。";
     }
-    $("sizeHint").textContent=t+" 切れ目が顔・首・関節に来ないよう、髪や無地の服、肌の広い面に破線が乗る構図にすると自然につながります。";
+    $("sizeHint").textContent=t;
   }
 
   /* 読み込み */
@@ -379,6 +430,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
       $("frame").classList.remove("hidden");
       cutButtons().forEach(function(b){b.disabled=false;});
       $("srcInfo").textContent="読み込んだ画像："+el.naturalWidth+" × "+el.naturalHeight+" px";
+      updateHint();
       setTimeout(drawLines,60);
     };
     el.onerror=function(){
