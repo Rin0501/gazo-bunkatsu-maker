@@ -236,6 +236,8 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     <div class="choices" id="presets">
       <label class="choice on"><input type="radio" name="preset" value="article" checked>
         <span><b>X記事に縦つなぎ</b><em>縦に等分。記事の中では画像が縦に積まれるので、上下がつながって見えます</em></span></label>
+      <label class="choice"><input type="radio" name="preset" value="thread2">
+        <span><b>縦2分割・連投で1枚絵</b><em>上半分と下半分に分けて、2つのポストで1枚の絵に見せる作り方</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="post4">
         <span><b>Xの通常ポスト・4枚</b><em>横に4等分。タイムラインで4枚が横に並ぶので、左から順に1枚の絵になります</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="pair">
@@ -278,6 +280,16 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
         <span><b>JPEG</b><em>軽い。写真向き</em></span></label>
     </div>
 
+    <h2>書き出しの大きさ</h2>
+    <div class="stepper">
+      <select id="scale">
+        <option value="1">等倍（そのまま）</option>
+        <option value="1.5">1.5倍に拡大</option>
+        <option value="2">2倍に拡大</option>
+      </select>
+    </div>
+    <p class="hint">拡大しても写っている情報そのものは増えません。元画像が小さく、SNS側の再圧縮でぼやけるときだけ使ってください。本当に画質を上げたいなら、元画像を大きく作るのが確実です。</p>
+
     <button class="cut-action" data-cut disabled>切る</button>
   </aside>
 </div>
@@ -287,10 +299,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     <h2>切り上がり</h2>
     <button class="zip" id="zipBtn">まとめて保存（ZIP）</button>
   </div>
-  <p class="note">
-    <b>投稿するとき</b>：番号の順に選んでください。順番が入れ替わると絵がつながりません。<br>
-    <b>iPhone・Android</b>：画像を長押しして「写真に追加」で保存するのが確実です。まとめて保存を使うと「ファイル」アプリに入ります。
-  </p>
+  <p class="note" id="postNote"></p>
   <div class="pieces" id="pieces"></div>
 </section>
 
@@ -349,10 +358,11 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   function applyPreset(){
     var p=picked("preset","article");
     if(p==="article"){$("rows").value=4;$("cols").value=1;setFrame(3,1);}
+    if(p==="thread2"){$("rows").value=2;$("cols").value=1;setFrame(3,4);}
     if(p==="post4"){$("rows").value=1;$("cols").value=4;setFrame(9,16);}
     if(p==="pair"){$("rows").value=1;$("cols").value=2;setFrame(9,16);}
-    $("rows").disabled=(p==="post4"||p==="pair");
-    $("cols").disabled=(p==="article");
+    $("rows").disabled=(p==="post4"||p==="pair"||p==="thread2");
+    $("cols").disabled=(p==="article"||p==="thread2");
     if(p==="free"){$("rows").disabled=false;$("cols").disabled=false;}
     showFrame(true);
     updateHint(); drawLines(); updateOffset();
@@ -363,8 +373,22 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   $("fw").addEventListener("input",updateHint);
   $("fh").addEventListener("input",updateHint);
 
+  function postGuide(){
+    var r=rows(), c=cols(), t="";
+    if(r===2&&c===1){
+      t="<b>投稿するとき</b>：1番が上半分、2番が下半分です。下を先に見せてタップで上とつながる見せ方にするなら、2番を先に投稿してから1番を出します。どちらを先にしても、上下の並びだけは入れ替えないでください。";
+    }else if(c>1&&r===1){
+      t="<b>投稿するとき</b>：左から順に1・2…と並びます。この順で選んでください。";
+    }else{
+      t="<b>投稿するとき</b>：番号の順に選んでください。順番が入れ替わると絵がつながりません。";
+    }
+    $("postNote").innerHTML = t +
+      "<br><b>iPhone・Android</b>：画像を長押しして「写真に追加」で保存するのが確実です。まとめて保存を使うと「ファイル」アプリに入ります。";
+  }
+
   function updateHint(){
     var p=picked("preset","article"), r=rows(), c=cols(), stacked=(c===1);
+    postGuide();
     $("frameHead").textContent = stacked ? "1枚ぶんの形" : "1枚ぶんの表示枠";
     $("frameNote").textContent = stacked
       ? "記事やnoteでは画像が上から順に積まれます。1枚ぶんを横長の帯にすると全体が短くまとまり、スクロールが減ります。縦長にするほど記事は長くなります。"
@@ -384,7 +408,10 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
       t += (tall<=1.6) ? "スクロールなしで見渡せる長さです。"
          : (tall<=2.5) ? "少しスクロールが必要です。"
          : "かなり長くなります。1枚ぶんをもっと横長（例 3:1）にすると収まります。";
-      t += " 画像と画像の間にはキャプション欄のすき間が入るので、顔や手が境界をまたぐと分断されて見えます。帯1枚の中に顔が収まる構図にしてください。";
+      t += " 画像と画像の間にはすき間が入るので、顔や手が境界をまたぐと分断されて見えます。1枚の中に顔が収まる構図にしてください。";
+      if(ratio && ratio < 3/4){
+        t += " なお1枚ぶんが3:4より縦長だと、Xのタイムラインでは全体が縮小されて小さく表示されます。大きく見せたいなら3:4までに収めてください。";
+      }
     }else{
       if(img){
         var aw=img.naturalWidth/c, ah=img.naturalHeight/r, a=aw/ah, cut, dir;
@@ -546,6 +573,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     var mime = fmt==="png" ? "image/png" : "image/jpeg";
     var ext  = fmt==="png" ? "png" : "jpg";
     var a=axes(), xs=a.x.arr, ys=a.y.arr;
+    var sc=parseFloat($("scale").value)||1;
 
     pieces=[]; $("pieces").innerHTML=""; $("output").classList.remove("hidden");
     var index=0, total=r*c, done=0;
@@ -555,14 +583,16 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
         index++;
         (function(no,sx,sy,sw,sh){
           var cv=document.createElement("canvas");
-          cv.width=sw; cv.height=sh;
+          cv.width=Math.round(sw*sc); cv.height=Math.round(sh*sc);
           var ctx=cv.getContext("2d");
-          if(fmt==="jpeg"){ctx.fillStyle="#fff";ctx.fillRect(0,0,sw,sh);}
-          ctx.drawImage(img,sx,sy,sw,sh,0,0,sw,sh);
+          ctx.imageSmoothingEnabled=true;
+          ctx.imageSmoothingQuality="high";
+          if(fmt==="jpeg"){ctx.fillStyle="#fff";ctx.fillRect(0,0,cv.width,cv.height);}
+          ctx.drawImage(img,sx,sy,sw,sh,0,0,cv.width,cv.height);
           cv.toBlob(function(blob){
             var name=baseName+"_"+(no<10?"0":"")+no+"."+ext;
             pieces.push({no:no,name:name,blob:blob});
-            render(no,name,blob,sw,sh);
+            render(no,name,blob,cv.width,cv.height);
             if(++done===total){
               pieces.sort(function(a,b){return a.no-b.no;});
               $("output").scrollIntoView({behavior:"smooth",block:"start"});
@@ -575,11 +605,13 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 
   function render(no,name,blob,w,h){
     var url=URL.createObjectURL(blob);
+    var where="";
+    if(rows()===2&&cols()===1){ where=(no===1)?" 上半分":" 下半分"; }
     var card=document.createElement("div");
     card.className="piece"; card.style.order=no;
     card.innerHTML=
       '<figure><img src="'+url+'" alt="'+no+'枚目"></figure>'+
-      '<div class="piece-meta"><span class="no">'+no+'</span><span class="px">'+w+' × '+h+' px</span></div>'+
+      '<div class="piece-meta"><span class="no">'+no+where+'</span><span class="px">'+w+' × '+h+' px</span></div>'+
       '<a class="save" download="'+name+'" href="'+url+'">この1枚を保存</a>';
     $("pieces").appendChild(card);
   }
