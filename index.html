@@ -91,6 +91,14 @@ body{
 .cutline{position:absolute;pointer-events:none;}
 .cutline.h{left:-.6rem;right:-.6rem;height:0;border-top:1px dashed var(--cut);}
 .cutline.v{top:-.6rem;bottom:-.6rem;width:0;border-left:1px dashed var(--cut);}
+.cut-handle{
+  position:absolute;z-index:6;width:1.65rem;height:1.65rem;margin:-.825rem 0 0 -.825rem;
+  border:3px solid #fff;border-radius:50%;background:var(--cut);
+  box-shadow:0 1px 5px rgba(27,39,51,.35);cursor:grab;touch-action:none;
+}
+.cut-handle:active{cursor:grabbing;transform:scale(1.08);}
+.cut-handle.h{left:82%;}
+.cut-handle.v{top:18%;}
 .tag{
   position:absolute;background:var(--cut);color:#fff;
   font-size:.75rem;font-weight:700;line-height:1;padding:.32rem .5rem;pointer-events:none;
@@ -262,6 +270,12 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     <p class="hint" id="frameNote">Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。</p>
 
     <h2>切れ目の位置</h2>
+    <div class="choices" id="cutMode">
+      <label class="choice on"><input type="radio" name="cutMode" value="group" checked>
+        <span><b>まとめて動かす</b><em>全部同じ大きさのまま、切れ目をまとめてずらします</em></span></label>
+      <label class="choice"><input type="radio" name="cutMode" value="free">
+        <span><b>丸を1本ずつ動かす</b><em>プレビューの丸をドラッグして、切れ目を自由に調整します</em></span></label>
+    </div>
     <div id="offYBox" class="slide">
       <label for="offY">上下にずらす</label>
       <input type="range" id="offY" min="0" max="100" value="50">
@@ -312,7 +326,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 <script>
 (function(){
   "use strict";
-  var img=null, baseName="image", pieces=[];
+  var img=null, baseName="image", pieces=[], freeCuts=null;
   function $(id){return document.getElementById(id);}
   function cutButtons(){return document.querySelectorAll("[data-cut]");}
 
@@ -342,6 +356,8 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   }
   function rows(){return parseInt($("rows").value,10);}
   function cols(){return parseInt($("cols").value,10);}
+  function cutMode(){return picked("cutMode","group");}
+  function resetFreeCuts(){freeCuts=null;}
 
   function frameRatio(){
     var w=parseFloat($("fw").value), h=parseFloat($("fh").value);
@@ -356,6 +372,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   function setFrame(w,h){ $("fw").value=w; $("fh").value=h; }
 
   function applyPreset(){
+    resetFreeCuts();
     var p=picked("preset","article");
     if(p==="article"){$("rows").value=4;$("cols").value=1;setFrame(3,1);}
     if(p==="thread2"){$("rows").value=2;$("cols").value=1;setFrame(3,4);}
@@ -368,10 +385,11 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     updateHint(); drawLines(); updateOffset();
   }
   $("presets").addEventListener("change",applyPreset);
-  $("rows").addEventListener("change",function(){updateHint();drawLines();updateOffset();});
-  $("cols").addEventListener("change",function(){updateHint();drawLines();updateOffset();});
-  $("fw").addEventListener("input",updateHint);
-  $("fh").addEventListener("input",updateHint);
+  $("rows").addEventListener("change",function(){resetFreeCuts();updateHint();drawLines();updateOffset();});
+  $("cols").addEventListener("change",function(){resetFreeCuts();updateHint();drawLines();updateOffset();});
+  $("fw").addEventListener("input",function(){resetFreeCuts();updateHint();drawLines();updateOffset();});
+  $("fh").addEventListener("input",function(){resetFreeCuts();updateHint();drawLines();updateOffset();});
+  $("cutMode").addEventListener("change",function(){resetFreeCuts();syncRadios();drawLines();updateOffset();});
 
   function postGuide(){
     var r=rows(), c=cols(), t="";
@@ -460,6 +478,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     var url=URL.createObjectURL(file), el=new Image();
     el.onload=function(){
       img=el;
+      resetFreeCuts();
       $("preview").src=url;
       $("dropzone").classList.add("hidden");
       $("frame").classList.remove("hidden");
@@ -476,7 +495,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 
   /* 裁断線 */
   function drawLines(){
-    var frame=$("frame"), old=frame.querySelectorAll(".cutline,.tag,.waste");
+    var frame=$("frame"), old=frame.querySelectorAll(".cutline,.cut-handle,.tag,.waste");
     for(var i=0;i<old.length;i++){old[i].remove();}
     if(!img)return;
     var W=img.naturalWidth, H=img.naturalHeight, a=axes();
@@ -505,10 +524,12 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     for(y=0;y<=r;y++){
       el=document.createElement("div"); el.className="cutline h";
       el.style.top=pct(a.y.arr[y],H); frame.appendChild(el);
+      if(cutMode()==="free"&&y>0&&y<r){addHandle("h",y,a.y.arr[y],H);}
     }
     for(x=0;x<=c;x++){
       el=document.createElement("div"); el.className="cutline v";
       el.style.left=pct(a.x.arr[x],W); frame.appendChild(el);
+      if(cutMode()==="free"&&x>0&&x<c){addHandle("v",x,a.x.arr[x],W);}
     }
     for(y=0;y<r;y++){
       for(x=0;x<c;x++){
@@ -517,6 +538,30 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
         el.style.left="calc("+pct(a.x.arr[x],W)+" + .4rem)";
         frame.appendChild(el);
       }
+    }
+
+    function addHandle(dir,index,pos,total){
+      var h=document.createElement("div");
+      h.className="cut-handle "+dir;
+      h.setAttribute("role","slider");
+      h.setAttribute("aria-label",dir==="h"?"横の切れ目 "+index:"縦の切れ目 "+index);
+      if(dir==="h"){h.style.top=pct(pos,total);}else{h.style.left=pct(pos,total);}
+      h.addEventListener("pointerdown",function(e){
+        e.preventDefault();
+        document.addEventListener("pointermove",move);
+        document.addEventListener("pointerup",end,{once:true});
+        document.addEventListener("pointercancel",end,{once:true});
+      });
+      function move(e){
+        var rect=$("preview").getBoundingClientRect();
+        var arr=dir==="h"?freeCuts.y:freeCuts.x;
+        var raw=dir==="h"?(e.clientY-rect.top)/rect.height*H:(e.clientX-rect.left)/rect.width*W;
+        var lo=arr[index-1]+8, hi=arr[index+1]-8;
+        arr[index]=Math.round(Math.max(lo,Math.min(hi,raw)));
+        drawLines();updateOffset();
+      }
+      function end(){document.removeEventListener("pointermove",move);}
+      frame.appendChild(h);
     }
   }
   window.addEventListener("resize",drawLines);
@@ -532,6 +577,14 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   function axes(){
     if(!img)return null;
     var W=img.naturalWidth, H=img.naturalHeight, c=cols(), r=rows();
+    if(cutMode()==="free"){
+      if(!freeCuts||freeCuts.x.length!==c+1||freeCuts.y.length!==r+1){
+        freeCuts={x:[],y:[]};
+        for(var fx=0;fx<=c;fx++){freeCuts.x.push(Math.round(W*fx/c));}
+        for(var fy=0;fy<=r;fy++){freeCuts.y.push(Math.round(H*fy/r));}
+      }
+      return {x:{arr:freeCuts.x,size:null,slack:0,start:0},y:{arr:freeCuts.y,size:null,slack:0,start:0},fit:true};
+    }
     var pw=Math.floor(W/c), ratio=frameRatio();
     var ph = ratio ? Math.round(pw/ratio) : Math.floor(H/r);
     var fit = (ph*r<=H);
@@ -550,8 +603,15 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 
   function updateOffset(){
     var r=rows(), c=cols();
-    $("offYBox").style.display = "";
-    $("offXBox").style.display = (c>1) ? "" : "none";
+    var free=cutMode()==="free";
+    $("offYBox").style.display = free ? "none" : "";
+    $("offXBox").style.display = (!free&&c>1) ? "" : "none";
+    if(free){
+      $("offNote").textContent=img
+        ? "プレビュー上の丸をドラッグしてください。端は固定され、画像を最後まで使います。切れ目どうしは最低8px離れます。"
+        : "画像を読み込むと、切れ目に丸いハンドルが表示されます。";
+      return;
+    }
     if(!img){ $("offNote").textContent="画像を読み込むと、動かせる幅が表示されます。"; return; }
     var a=axes(), parts=[];
     parts.push("1枚あたり "+a.x.size+" × "+a.y.size+" px。すべて同じ大きさです");
