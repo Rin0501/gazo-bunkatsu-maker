@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="X・note・Instagram向けに画像を分割。画像はブラウザ内で処理されます。">
 <meta name="theme-color" content="#E9ECF0">
 <title>画像分割メーカー｜1枚の画像を等分に切って、SNSでつなげて見せる</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,6 +50,14 @@ body{
   font-size:.875rem;font-weight:500;letter-spacing:.18em;color:var(--steel);
 }
 .lede{margin:.6rem 0 0;max-width:60ch;color:var(--steel);font-size:.95rem;}
+.masthead-top{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:.6rem 1rem;}
+.lang{display:inline-flex;flex:none;border:1px solid var(--line);border-radius:var(--r);background:var(--plate);overflow:hidden;}
+.lang button{
+  min-height:2.5rem;padding:.35rem .85rem;border:0;background:transparent;color:var(--steel);
+  font:inherit;font-size:.85rem;font-weight:500;cursor:pointer;
+}
+.lang button+button{border-left:1px solid var(--line);}
+.lang button[aria-pressed="true"]{background:var(--ink);color:#fff;}
 .rule{height:1px;margin-top:1.15rem;
   background:repeating-linear-gradient(to right,var(--cut) 0 10px,transparent 10px 18px);}
 
@@ -219,8 +228,14 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 <div class="wrap">
 
 <header class="masthead">
-  <h1 class="title">画像分割メーカー</h1>
-  <p class="lede">1枚の画像を、隙間なく等分に切り分けます。X・note・Instagramに順番どおり貼れば、複数枚が1枚の絵につながって見えます。画像はこの端末の中だけで処理され、どこにも送信されません。</p>
+  <div class="masthead-top">
+    <h1 class="title" data-i18n="appName">画像分割メーカー</h1>
+    <div class="lang" role="group" aria-label="言語 / Language">
+      <button type="button" data-lang="ja" lang="ja" aria-pressed="true">日本語</button>
+      <button type="button" data-lang="en" lang="en" aria-pressed="false">English</button>
+    </div>
+  </div>
+  <p class="lede" data-i18n="lede">1枚の画像を、隙間なく等分に切り分けます。X・note・Instagramに順番どおり貼れば、複数枚が1枚の絵につながって見えます。画像はこの端末の中だけで処理され、どこにも送信されません。</p>
   <div class="rule"></div>
 </header>
 
@@ -228,113 +243,327 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   <section>
     <div class="mat" id="mat">
       <div class="dropzone" id="dropzone">
-        <p>ここに画像をドラッグ、またはタップして選ぶ</p>
-        <button class="pick" id="pickBtn">画像を選ぶ</button>
-        <small>PNG・JPEG・WebP に対応<br>アップロードは行いません</small>
+        <p data-i18n="dropText">ここに画像をドラッグ、またはタップして選ぶ</p>
+        <button class="pick" id="pickBtn" data-i18n="pick">画像を選ぶ</button>
+        <small data-i18n-html="dropNote">PNG・JPEG・WebP に対応<br>アップロードは行いません</small>
       </div>
       <div class="frame hidden" id="frame">
-        <img id="preview" alt="読み込んだ画像のプレビュー。破線が切る位置です。">
+        <img id="preview" data-i18n-alt="previewAlt" alt="読み込んだ画像のプレビュー。破線が切る位置です。">
       </div>
     </div>
     <p class="hint" id="srcInfo"></p>
   </section>
 
   <aside class="panel">
-    <h2>切り方</h2>
+    <h2 data-i18n="hPreset">切り方</h2>
     <div class="choices" id="presets">
       <label class="choice on"><input type="radio" name="preset" value="article" checked>
-        <span><b>X記事に縦つなぎ</b><em>縦に等分。記事の中では画像が縦に積まれるので、上下がつながって見えます</em></span></label>
+        <span><b data-i18n="pArticle">X記事に縦つなぎ</b><em data-i18n="pArticleNote">縦に等分。記事の中では画像が縦に積まれるので、上下がつながって見えます</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="thread2">
-        <span><b>縦2分割・連投で1枚絵</b><em>上半分と下半分に分けて、2つのポストで1枚の絵に見せる作り方</em></span></label>
+        <span><b data-i18n="pThread2">縦2分割・連投で1枚絵</b><em data-i18n="pThread2Note">上半分と下半分に分けて、2つのポストで1枚の絵に見せる作り方</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="post4">
-        <span><b>Xの通常ポスト・4枚</b><em>横に4等分。タイムラインで4枚が横に並ぶので、左から順に1枚の絵になります</em></span></label>
+        <span><b data-i18n="pPost4">Xの通常ポスト・4枚</b><em data-i18n="pPost4Note">横に4等分。タイムラインで4枚が横に並ぶので、左から順に1枚の絵になります</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="pair">
-        <span><b>Xの通常ポスト・2枚</b><em>横に2等分。2枚が横に並びます</em></span></label>
+        <span><b data-i18n="pPair">Xの通常ポスト・2枚</b><em data-i18n="pPairNote">横に2等分。2枚が横に並びます</em></span></label>
       <label class="choice"><input type="radio" name="preset" value="free">
-        <span><b>自由に決める</b><em>縦と横の枚数を自分で指定します</em></span></label>
+        <span><b data-i18n="pFree">自由に決める</b><em data-i18n="pFreeNote">縦と横の枚数を自分で指定します</em></span></label>
     </div>
 
-    <h2>枚数</h2>
+    <h2 data-i18n="hCount">枚数</h2>
     <div class="steppers">
-      <div class="stepper"><label for="rows">縦に何枚</label><select id="rows"></select></div>
-      <div class="stepper"><label for="cols">横に何枚</label><select id="cols"></select></div>
+      <div class="stepper"><label for="rows" data-i18n="rowsLabel">縦に何枚</label><select id="rows"></select></div>
+      <div class="stepper"><label for="cols" data-i18n="colsLabel">横に何枚</label><select id="cols"></select></div>
     </div>
     <p class="hint" id="sizeHint"></p>
 
     <h2 id="frameHead">1枚ぶんの表示枠</h2>
     <div class="ratio" id="frameBox">
-      <input type="number" id="fw" min="1" step="1" inputmode="numeric" aria-label="枠の横の比率">
+      <input type="number" id="fw" min="1" step="1" inputmode="numeric" data-i18n-aria="fwAria" aria-label="枠の横の比率">
       <span>：</span>
-      <input type="number" id="fh" min="1" step="1" inputmode="numeric" aria-label="枠の縦の比率">
+      <input type="number" id="fh" min="1" step="1" inputmode="numeric" data-i18n-aria="fhAria" aria-label="枠の縦の比率">
     </div>
     <p class="hint" id="frameNote">Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。</p>
 
-    <h2>切れ目の位置</h2>
+    <h2 data-i18n="hCutPos">切れ目の位置</h2>
     <div class="choices" id="cutMode">
       <label class="choice on"><input type="radio" name="cutMode" value="group" checked>
-        <span><b>まとめて動かす</b><em>全部同じ大きさのまま、切れ目をまとめてずらします</em></span></label>
+        <span><b data-i18n="mGroup">まとめて動かす</b><em data-i18n="mGroupNote">全部同じ大きさのまま、切れ目をまとめてずらします</em></span></label>
       <label class="choice"><input type="radio" name="cutMode" value="free">
-        <span><b>丸を1本ずつ動かす</b><em>プレビューの丸をドラッグして、切れ目を自由に調整します</em></span></label>
+        <span><b data-i18n="mFree">丸を1本ずつ動かす</b><em data-i18n="mFreeNote">プレビューの丸をドラッグして、切れ目を自由に調整します</em></span></label>
     </div>
     <div id="offYBox" class="slide">
-      <label for="offY">上下にずらす</label>
+      <label for="offY" data-i18n="offY">上下にずらす</label>
       <input type="range" id="offY" min="0" max="100" value="50">
     </div>
     <div id="offXBox" class="slide">
-      <label for="offX">左右にずらす</label>
+      <label for="offX" data-i18n="offX">左右にずらす</label>
       <input type="range" id="offX" min="0" max="100" value="50">
     </div>
     <p class="hint" id="offNote"></p>
 
-    <h2>保存形式</h2>
+    <h2 data-i18n="hFormat">保存形式</h2>
     <div class="choices">
       <label class="choice on"><input type="radio" name="fmt" value="png" checked>
-        <span><b>PNG</b><em>画質そのまま。ファイルは大きめ</em></span></label>
+        <span><b>PNG</b><em data-i18n="fmtPngNote">画質そのまま。ファイルは大きめ</em></span></label>
       <label class="choice"><input type="radio" name="fmt" value="jpeg">
-        <span><b>JPEG</b><em>軽い。写真向き</em></span></label>
+        <span><b>JPEG</b><em data-i18n="fmtJpegNote">軽い。写真向き</em></span></label>
     </div>
 
-    <h2>書き出しの大きさ</h2>
+    <h2 data-i18n="hScale">書き出しの大きさ</h2>
     <div class="stepper">
       <select id="scale">
-        <option value="1">等倍（そのまま）</option>
-        <option value="1.5">1.5倍に拡大</option>
-        <option value="2">2倍に拡大</option>
+        <option value="1" data-i18n="scale1">等倍（そのまま）</option>
+        <option value="1.5" data-i18n="scale15">1.5倍に拡大</option>
+        <option value="2" data-i18n="scale2">2倍に拡大</option>
       </select>
     </div>
-    <p class="hint">拡大しても写っている情報そのものは増えません。元画像が小さく、SNS側の再圧縮でぼやけるときだけ使ってください。本当に画質を上げたいなら、元画像を大きく作るのが確実です。</p>
+    <p class="hint" data-i18n="scaleNote">拡大しても写っている情報そのものは増えません。元画像が小さく、SNS側の再圧縮でぼやけるときだけ使ってください。本当に画質を上げたいなら、元画像を大きく作るのが確実です。</p>
 
-    <button class="cut-action" data-cut disabled>切る</button>
+    <button class="cut-action" data-cut data-i18n="cutBtn" disabled>切る</button>
   </aside>
 </div>
 
 <section class="output hidden" id="output">
   <div class="output-head">
-    <h2>切り上がり</h2>
-    <button class="zip" id="zipBtn">まとめて保存（ZIP）</button>
+    <h2 data-i18n="hOutput">切り上がり</h2>
+    <button class="zip" id="zipBtn" data-i18n="zip">まとめて保存（ZIP）</button>
   </div>
   <p class="note" id="postNote"></p>
   <div class="pieces" id="pieces"></div>
 </section>
 
-<footer>画像分割メーカー / 画像はブラウザ内でのみ処理されます</footer>
+<footer data-i18n="footer">画像分割メーカー / 画像はブラウザ内でのみ処理されます</footer>
 </div>
 
-<div class="dock"><button class="cut-action" data-cut disabled>切る</button></div>
+<div class="dock"><button class="cut-action" data-cut data-i18n="cutBtn" disabled>切る</button></div>
 <input type="file" id="fileInput" accept="image/*" style="display:none">
 
 <script>
 (function(){
   "use strict";
-  var img=null, baseName="image", pieces=[], freeCuts=null;
+  var img=null, baseName="image", pieces=[], freeCuts=null, srcState=null;
   function $(id){return document.getElementById(id);}
   function cutButtons(){return document.querySelectorAll("[data-cut]");}
+
+  /* 表示言語（日本語／English）。切り方・比率・書き出しには影響しない */
+  var TEXT={
+    ja:{
+      docTitle:"画像分割メーカー｜1枚の画像を等分に切って、SNSでつなげて見せる",
+      description:"X・note・Instagram向けに画像を分割。画像はブラウザ内で処理されます。",
+      appName:"画像分割メーカー",
+      lede:"1枚の画像を、隙間なく等分に切り分けます。X・note・Instagramに順番どおり貼れば、複数枚が1枚の絵につながって見えます。画像はこの端末の中だけで処理され、どこにも送信されません。",
+      dropText:"ここに画像をドラッグ、またはタップして選ぶ",
+      pick:"画像を選ぶ",
+      dropNote:"PNG・JPEG・WebP に対応<br>アップロードは行いません",
+      previewAlt:"読み込んだ画像のプレビュー。破線が切る位置です。",
+      hPreset:"切り方",
+      pArticle:"X記事に縦つなぎ",
+      pArticleNote:"縦に等分。記事の中では画像が縦に積まれるので、上下がつながって見えます",
+      pThread2:"縦2分割・連投で1枚絵",
+      pThread2Note:"上半分と下半分に分けて、2つのポストで1枚の絵に見せる作り方",
+      pPost4:"Xの通常ポスト・4枚",
+      pPost4Note:"横に4等分。タイムラインで4枚が横に並ぶので、左から順に1枚の絵になります",
+      pPair:"Xの通常ポスト・2枚",
+      pPairNote:"横に2等分。2枚が横に並びます",
+      pFree:"自由に決める",
+      pFreeNote:"縦と横の枚数を自分で指定します",
+      hCount:"枚数",
+      rowsLabel:"縦に何枚",
+      colsLabel:"横に何枚",
+      countOpt:"{n}枚",
+      frameHeadStack:"1枚ぶんの形",
+      frameHead:"1枚ぶんの表示枠",
+      fwAria:"枠の横の比率",
+      fhAria:"枠の縦の比率",
+      frameNoteStack:"記事やnoteでは画像が上から順に積まれます。1枚ぶんを横長の帯にすると全体が短くまとまり、スクロールが減ります。縦長にするほど記事は長くなります。",
+      frameNote:"Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。",
+      hCutPos:"切れ目の位置",
+      mGroup:"まとめて動かす",
+      mGroupNote:"全部同じ大きさのまま、切れ目をまとめてずらします",
+      mFree:"丸を1本ずつ動かす",
+      mFreeNote:"プレビューの丸をドラッグして、切れ目を自由に調整します",
+      offY:"上下にずらす",
+      offX:"左右にずらす",
+      hFormat:"保存形式",
+      fmtPngNote:"画質そのまま。ファイルは大きめ",
+      fmtJpegNote:"軽い。写真向き",
+      hScale:"書き出しの大きさ",
+      scale1:"等倍（そのまま）",
+      scale15:"1.5倍に拡大",
+      scale2:"2倍に拡大",
+      scaleNote:"拡大しても写っている情報そのものは増えません。元画像が小さく、SNS側の再圧縮でぼやけるときだけ使ってください。本当に画質を上げたいなら、元画像を大きく作るのが確実です。",
+      cutBtn:"切る",
+      hOutput:"切り上がり",
+      zip:"まとめて保存（ZIP）",
+      zipBusy:"準備中…",
+      footer:"画像分割メーカー / 画像はブラウザ内でのみ処理されます",
+      guide2:"<b>投稿するとき</b>：1番が上半分、2番が下半分です。下を先に見せてタップで上とつながる見せ方にするなら、2番を先に投稿してから1番を出します。どちらを先にしても、上下の並びだけは入れ替えないでください。",
+      guideRow:"<b>投稿するとき</b>：左から順に1・2…と並びます。この順で選んでください。",
+      guideAny:"<b>投稿するとき</b>：番号の順に選んでください。順番が入れ替わると絵がつながりません。",
+      guideSave:"<br><b>iPhone・Android</b>：画像を長押しして「写真に追加」で保存するのが確実です。まとめて保存を使うと「ファイル」アプリに入ります。",
+      needRatio:"1枚ぶんの比率を数字で入れてください。",
+      recommend:"元画像のおすすめ：{w} × {h} px。1枚あたり {pw} × {ph} px、余った {slack}px が切れ目を動かすための「のりしろ」になります。",
+      stackTall:" {r}枚積むと全体の高さは横幅の約{tall}倍。",
+      stackShort:"スクロールなしで見渡せる長さです。",
+      stackMid:"少しスクロールが必要です。",
+      stackLong:"かなり長くなります。1枚ぶんをもっと横長（例 3:1）にすると収まります。",
+      stackGap:" 画像と画像の間にはすき間が入るので、顔や手が境界をまたぐと分断されて見えます。1枚の中に顔が収まる構図にしてください。",
+      stackNarrow:" なお1枚ぶんが3:4より縦長だと、Xのタイムラインでは全体が縮小されて小さく表示されます。大きく見せたいなら3:4までに収めてください。",
+      fitOk:" 今の画像は枠にほぼぴったりです。",
+      fitOff:" 今の画像は1枚あたり {aw} × {ah} px。枠とズレているので、Xの表示では{dir}が約{pct}%切り取られる可能性があります。",
+      dirSides:"左右",
+      dirTopBottom:"上下",
+      seamTip:" 切れ目が顔・首・関節に来ないよう、髪や無地の服、肌の広い面に破線が乗る構図にしてください。",
+      errNotImage:"画像ファイルを選んでください。PNG・JPEG・WebPに対応しています。",
+      errLoad:"この画像は読み込めませんでした。別のファイルで試してください。",
+      loaded:"読み込んだ画像：{w} × {h} px",
+      handleH:"横の切れ目 {n}",
+      handleV:"縦の切れ目 {n}",
+      freeNote:"プレビュー上の丸をドラッグしてください。端は固定され、画像を最後まで使います。切れ目どうしは最低8px離れます。",
+      freeNoImg:"画像を読み込むと、切れ目に丸いハンドルが表示されます。",
+      offNoImg:"画像を読み込むと、動かせる幅が表示されます。",
+      offSize:"1枚あたり {w} × {h} px。すべて同じ大きさです",
+      offNotFit:"画像の縦が足りないので、比率どおりには切れていません。元画像をもっと縦長にしてください",
+      offSlackY:"上下ののりしろは {s}px（今は上を {start}px 捨てています）",
+      offNoSlack:"のりしろがないので動かせません。元画像の縦をあと少し大きくしてください",
+      offSlackX:"左右ののりしろは {s}px",
+      sentSep:"。",
+      sentEnd:"。",
+      pieceAlt:"{n}枚目",
+      top:" 上半分",
+      bottom:" 下半分",
+      saveOne:"この1枚を保存"
+    },
+    en:{
+      docTitle:"Image Splitter | Cut one image into equal pieces that join up on social media",
+      description:"Split images for X, note, and Instagram. Images are processed locally in your browser.",
+      appName:"Image Splitter",
+      lede:"Cuts one image into equal pieces with no gaps. Post them in order on X, note, or Instagram, and the pieces join up to look like a single picture. Your image is processed only on this device and is never sent anywhere.",
+      dropText:"Drag an image here, or tap to choose one",
+      pick:"Choose image",
+      dropNote:"Supports PNG, JPEG, and WebP<br>Nothing is uploaded",
+      previewAlt:"Preview of the loaded image. The dashed lines show where it will be cut.",
+      hPreset:"Split style",
+      pArticle:"Vertical stack for X Articles",
+      pArticleNote:"Splits into equal rows. Images in an Article are stacked top to bottom, so the pieces join up vertically",
+      pThread2:"2 vertical pieces across 2 posts",
+      pThread2Note:"Splits into a top half and a bottom half, so two posts together look like one picture",
+      pPost4:"Regular X post, 4 images",
+      pPost4Note:"Splits into 4 equal columns. The 4 images sit side by side on the timeline and form one picture from left to right",
+      pPair:"Regular X post, 2 images",
+      pPairNote:"Splits into 2 equal columns. The 2 images sit side by side",
+      pFree:"Custom",
+      pFreeNote:"Choose the number of rows and columns yourself",
+      hCount:"Number of pieces",
+      rowsLabel:"Rows (top to bottom)",
+      colsLabel:"Columns (left to right)",
+      countOpt:"{n}",
+      frameHeadStack:"Shape of each piece",
+      frameHead:"Display frame for each image",
+      fwAria:"Frame width ratio",
+      fhAria:"Frame height ratio",
+      frameNoteStack:"In X Articles and on note, images are stacked from top to bottom. Making each piece a wide strip keeps the whole thing short and means less scrolling. The taller each piece, the longer the article.",
+      frameNote:"The width-to-height ratio of the frame X uses to show each image. X may change how images are displayed, so for accuracy, take a screenshot of a real post, measure the frame's width and height, and enter those numbers.",
+      hCutPos:"Cut positions",
+      mGroup:"Move all cuts together",
+      mGroupNote:"Keeps every piece the same size and shifts all the cuts at once",
+      mFree:"Drag each cut separately",
+      mFreeNote:"Drag the dots on the preview to adjust each cut freely",
+      offY:"Shift up or down",
+      offX:"Shift left or right",
+      hFormat:"File format",
+      fmtPngNote:"Keeps full quality. Larger files",
+      fmtJpegNote:"Smaller files. Good for photos",
+      hScale:"Export size",
+      scale1:"Original size (1×)",
+      scale15:"Enlarge 1.5×",
+      scale2:"Enlarge 2×",
+      scaleNote:"Enlarging doesn't add any real detail. Use it only when your original is small and turns blurry after the social site recompresses it. To truly improve quality, make the original image larger.",
+      cutBtn:"Split",
+      hOutput:"Your pieces",
+      zip:"Save all (ZIP)",
+      zipBusy:"Preparing…",
+      footer:"Image Splitter / Images are processed only in your browser",
+      guide2:"<b>When posting</b>: No. 1 is the top half and No. 2 is the bottom half. To show the bottom first and have people tap through to see it join the top, post No. 2 first, then No. 1. Whichever you post first, never swap the top and bottom.",
+      guideRow:"<b>When posting</b>: The pieces are numbered 1, 2, … from left to right. Select them in this order.",
+      guideAny:"<b>When posting</b>: Select the pieces in numbered order. If the order gets mixed up, the picture won't join up.",
+      guideSave:"<br><b>iPhone / Android</b>: Touch and hold an image, then choose the image-saving option (the wording varies by browser and device). Save all downloads a ZIP file; look for it in your browser’s downloads or your device’s Files app.",
+      needRatio:"Enter the ratio for each piece as numbers.",
+      recommend:"Recommended original size: {w} × {h} px. Each piece is {pw} × {ph} px, and the extra {slack}px is spare room for moving the cuts.",
+      stackTall:" Stacking {r} pieces makes the whole thing about {tall}× as tall as it is wide.",
+      stackShort:" It fits on screen without scrolling.",
+      stackMid:" It needs a little scrolling.",
+      stackLong:" It gets quite long. Making each piece wider (e.g. 3:1) will shorten it.",
+      stackGap:" There are gaps between the images, so a face or hand that crosses a seam will look cut apart. Frame your shot so each face fits inside one piece.",
+      stackNarrow:" Also, if each piece is taller than 3:4, X shrinks the whole image on the timeline so it appears small. To show it large, keep it within 3:4.",
+      fitOk:" The current image fits the frame almost exactly.",
+      fitOff:" Each piece of the current image is {aw} × {ah} px. It doesn't match the frame, so X may crop about {pct}% from the {dir}.",
+      dirSides:"sides",
+      dirTopBottom:"top and bottom",
+      seamTip:" Frame your shot so the dashed lines fall on hair, plain clothing, or large areas of skin, not on a face, neck, or joint.",
+      errNotImage:"Please choose an image file. PNG, JPEG, and WebP are supported.",
+      errLoad:"This image couldn't be loaded. Please try a different file.",
+      loaded:"Loaded image: {w} × {h} px",
+      handleH:"Horizontal cut {n}",
+      handleV:"Vertical cut {n}",
+      freeNote:"Drag the dots on the preview. The edges stay fixed, so the whole image is used. Cuts stay at least 8px apart.",
+      freeNoImg:"Once you load an image, round handles appear on the cuts.",
+      offNoImg:"Once you load an image, you'll see how far the cuts can move.",
+      offSize:"Each piece is {w} × {h} px, all the same size",
+      offNotFit:"The image isn't tall enough, so the pieces aren't cut to the exact ratio. Use a taller original image",
+      offSlackY:"Spare room top to bottom: {s}px (currently trimming {start}px from the top)",
+      offNoSlack:"There's no spare room, so the cuts can't move. Make the original image a little taller",
+      offSlackX:"Spare room side to side: {s}px",
+      sentSep:". ",
+      sentEnd:".",
+      pieceAlt:"Piece {n}",
+      top:" Top half",
+      bottom:" Bottom half",
+      saveOne:"Save this image"
+    }
+  };
+  var LANG_KEY="gazoBunkatsuMaker.lang", lang="ja";
+  function t(key,vars){
+    var s=TEXT[lang][key];
+    if(s==null){s=TEXT.ja[key];}
+    if(vars){s=s.replace(/\{(\w+)\}/g,function(m,k){return (k in vars)?vars[k]:m;});}
+    return s;
+  }
+  function readLang(){
+    try{
+      var q=new URLSearchParams(location.search).get("lang");
+      if(q==="ja"||q==="en"){return q;}
+    }catch(e){}
+    try{
+      var s=localStorage.getItem(LANG_KEY);
+      if(s==="ja"||s==="en"){return s;}
+    }catch(e){}
+    return "ja";
+  }
+  function applyStaticText(){
+    document.documentElement.lang=lang;
+    document.title=t("docTitle");
+    document.querySelector('meta[name="description"]').content=t("description");
+    var i, list;
+    list=document.querySelectorAll("[data-i18n]");
+    for(i=0;i<list.length;i++){list[i].textContent=t(list[i].getAttribute("data-i18n"));}
+    list=document.querySelectorAll("[data-i18n-html]");
+    for(i=0;i<list.length;i++){list[i].innerHTML=t(list[i].getAttribute("data-i18n-html"));}
+    list=document.querySelectorAll("[data-i18n-aria]");
+    for(i=0;i<list.length;i++){list[i].setAttribute("aria-label",t(list[i].getAttribute("data-i18n-aria")));}
+    list=document.querySelectorAll("[data-i18n-alt]");
+    for(i=0;i<list.length;i++){list[i].setAttribute("alt",t(list[i].getAttribute("data-i18n-alt")));}
+    list=document.querySelectorAll("[data-lang]");
+    for(i=0;i<list.length;i++){list[i].setAttribute("aria-pressed",String(list[i].getAttribute("data-lang")===lang));}
+    list=document.querySelectorAll("#rows option,#cols option");
+    for(i=0;i<list.length;i++){list[i].textContent=t("countOpt",{n:list[i].value});}
+  }
 
   /* 枚数の選択肢 */
   function fill(sel,max){
     for(var i=1;i<=max;i++){
       var o=document.createElement("option");
-      o.value=i;o.textContent=i+"枚";sel.appendChild(o);
+      o.value=i;o.textContent=t("countOpt",{n:i});sel.appendChild(o);
     }
   }
   fill($("rows"),8); fill($("cols"),4);
@@ -392,56 +621,53 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   $("cutMode").addEventListener("change",function(){resetFreeCuts();syncRadios();drawLines();updateOffset();});
 
   function postGuide(){
-    var r=rows(), c=cols(), t="";
+    var r=rows(), c=cols(), s="";
     if(r===2&&c===1){
-      t="<b>投稿するとき</b>：1番が上半分、2番が下半分です。下を先に見せてタップで上とつながる見せ方にするなら、2番を先に投稿してから1番を出します。どちらを先にしても、上下の並びだけは入れ替えないでください。";
+      s=t("guide2");
     }else if(c>1&&r===1){
-      t="<b>投稿するとき</b>：左から順に1・2…と並びます。この順で選んでください。";
+      s=t("guideRow");
     }else{
-      t="<b>投稿するとき</b>：番号の順に選んでください。順番が入れ替わると絵がつながりません。";
+      s=t("guideAny");
     }
-    $("postNote").innerHTML = t +
-      "<br><b>iPhone・Android</b>：画像を長押しして「写真に追加」で保存するのが確実です。まとめて保存を使うと「ファイル」アプリに入ります。";
+    $("postNote").innerHTML = s + t("guideSave");
   }
 
   function updateHint(){
     var p=picked("preset","article"), r=rows(), c=cols(), stacked=(c===1);
     postGuide();
-    $("frameHead").textContent = stacked ? "1枚ぶんの形" : "1枚ぶんの表示枠";
-    $("frameNote").textContent = stacked
-      ? "記事やnoteでは画像が上から順に積まれます。1枚ぶんを横長の帯にすると全体が短くまとまり、スクロールが減ります。縦長にするほど記事は長くなります。"
-      : "Xで1枚ぶんが表示される枠の、横と縦の比率です。見え方は仕様変更で変わるので、実際の投稿をスクショして枠の幅と高さを測り、その数字を入れると正確になります。";
+    $("frameHead").textContent = stacked ? t("frameHeadStack") : t("frameHead");
+    $("frameNote").textContent = stacked ? t("frameNoteStack") : t("frameNote");
 
     var ratio=frameRatio();
-    if(!ratio){ $("sizeHint").textContent="1枚ぶんの比率を数字で入れてください。"; return; }
+    if(!ratio){ $("sizeHint").textContent=t("needRatio"); return; }
 
     var pw = stacked ? 1536 : 1080;
     var ph = Math.round(pw/ratio);
     var slack=Math.round(ph*0.5);
-    var t = "元画像のおすすめ："+(pw*c)+" × "+(ph*r+slack)+" px。1枚あたり "+pw+" × "+ph+" px、余った "+slack+"px が切れ目を動かすための「のりしろ」になります。";
+    var s = t("recommend",{w:pw*c,h:ph*r+slack,pw:pw,ph:ph,slack:slack});
 
     if(stacked){
       var tall=(ph*r)/pw;
-      t += " "+r+"枚積むと全体の高さは横幅の約"+tall.toFixed(1)+"倍。";
-      t += (tall<=1.6) ? "スクロールなしで見渡せる長さです。"
-         : (tall<=2.5) ? "少しスクロールが必要です。"
-         : "かなり長くなります。1枚ぶんをもっと横長（例 3:1）にすると収まります。";
-      t += " 画像と画像の間にはすき間が入るので、顔や手が境界をまたぐと分断されて見えます。1枚の中に顔が収まる構図にしてください。";
+      s += t("stackTall",{r:r,tall:tall.toFixed(1)});
+      s += (tall<=1.6) ? t("stackShort")
+         : (tall<=2.5) ? t("stackMid")
+         : t("stackLong");
+      s += t("stackGap");
       if(ratio && ratio < 3/4){
-        t += " なお1枚ぶんが3:4より縦長だと、Xのタイムラインでは全体が縮小されて小さく表示されます。大きく見せたいなら3:4までに収めてください。";
+        s += t("stackNarrow");
       }
     }else{
       if(img){
         var aw=img.naturalWidth/c, ah=img.naturalHeight/r, a=aw/ah, cut, dir;
-        if(a>ratio){cut=1-ratio/a;dir="左右";}else{cut=1-a/ratio;dir="上下";}
+        if(a>ratio){cut=1-ratio/a;dir=t("dirSides");}else{cut=1-a/ratio;dir=t("dirTopBottom");}
         var pct=Math.round(cut*100);
-        t += (pct<2)
-          ? " 今の画像は枠にほぼぴったりです。"
-          : " 今の画像は1枚あたり "+Math.round(aw)+" × "+Math.round(ah)+" px。枠とズレているので、Xの表示では"+dir+"が約"+pct+"%切り取られる可能性があります。";
+        s += (pct<2)
+          ? t("fitOk")
+          : t("fitOff",{aw:Math.round(aw),ah:Math.round(ah),dir:dir,pct:pct});
       }
-      t += " 切れ目が顔・首・関節に来ないよう、髪や無地の服、肌の広い面に破線が乗る構図にしてください。";
+      s += t("seamTip");
     }
-    $("sizeHint").textContent=t;
+    $("sizeHint").textContent=s;
   }
 
   /* 読み込み */
@@ -469,9 +695,16 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     }
   });
 
+  function showSrcInfo(){
+    var el=$("srcInfo");
+    if(!srcState){el.textContent="";return;}
+    if(srcState.err){el.innerHTML='<span class="err">'+t(srcState.err)+'</span>';return;}
+    el.textContent=t("loaded",{w:srcState.w,h:srcState.h});
+  }
+
   function load(file){
     if(!file||file.type.indexOf("image")!==0){
-      $("srcInfo").innerHTML='<span class="err">画像ファイルを選んでください。PNG・JPEG・WebPに対応しています。</span>';
+      srcState={err:"errNotImage"}; showSrcInfo();
       return;
     }
     baseName=(file.name||"image").replace(/\.[^.]+$/,"").replace(/[\\\/:*?"<>|\s]/g,"_")||"image";
@@ -483,12 +716,12 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
       $("dropzone").classList.add("hidden");
       $("frame").classList.remove("hidden");
       cutButtons().forEach(function(b){b.disabled=false;});
-      $("srcInfo").textContent="読み込んだ画像："+el.naturalWidth+" × "+el.naturalHeight+" px";
+      srcState={w:el.naturalWidth,h:el.naturalHeight}; showSrcInfo();
       updateHint();
       setTimeout(function(){drawLines();updateOffset();},60);
     };
     el.onerror=function(){
-      $("srcInfo").innerHTML='<span class="err">この画像は読み込めませんでした。別のファイルで試してください。</span>';
+      srcState={err:"errLoad"}; showSrcInfo();
     };
     el.src=url;
   }
@@ -544,7 +777,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
       var h=document.createElement("div");
       h.className="cut-handle "+dir;
       h.setAttribute("role","slider");
-      h.setAttribute("aria-label",dir==="h"?"横の切れ目 "+index:"縦の切れ目 "+index);
+      h.setAttribute("aria-label",t(dir==="h"?"handleH":"handleV",{n:index}));
       if(dir==="h"){h.style.top=pct(pos,total);}else{h.style.left=pct(pos,total);}
       h.addEventListener("pointerdown",function(e){
         e.preventDefault();
@@ -607,23 +840,21 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     $("offYBox").style.display = free ? "none" : "";
     $("offXBox").style.display = (!free&&c>1) ? "" : "none";
     if(free){
-      $("offNote").textContent=img
-        ? "プレビュー上の丸をドラッグしてください。端は固定され、画像を最後まで使います。切れ目どうしは最低8px離れます。"
-        : "画像を読み込むと、切れ目に丸いハンドルが表示されます。";
+      $("offNote").textContent=img ? t("freeNote") : t("freeNoImg");
       return;
     }
-    if(!img){ $("offNote").textContent="画像を読み込むと、動かせる幅が表示されます。"; return; }
+    if(!img){ $("offNote").textContent=t("offNoImg"); return; }
     var a=axes(), parts=[];
-    parts.push("1枚あたり "+a.x.size+" × "+a.y.size+" px。すべて同じ大きさです");
+    parts.push(t("offSize",{w:a.x.size,h:a.y.size}));
     if(!a.fit){
-      parts.push("画像の縦が足りないので、比率どおりには切れていません。元画像をもっと縦長にしてください");
+      parts.push(t("offNotFit"));
     }else{
       parts.push(a.y.slack>0
-        ? "上下ののりしろは "+a.y.slack+"px（今は上を "+a.y.start+"px 捨てています）"
-        : "のりしろがないので動かせません。元画像の縦をあと少し大きくしてください");
+        ? t("offSlackY",{s:a.y.slack,start:a.y.start})
+        : t("offNoSlack"));
     }
-    if(c>1 && a.x.slack>0){ parts.push("左右ののりしろは "+a.x.slack+"px"); }
-    $("offNote").textContent=parts.join("。")+"。";
+    if(c>1 && a.x.slack>0){ parts.push(t("offSlackX",{s:a.x.slack})); }
+    $("offNote").textContent=parts.join(t("sentSep"))+t("sentEnd");
   }
   $("offY").addEventListener("input",function(){drawLines();updateOffset();});
   $("offX").addEventListener("input",function(){drawLines();updateOffset();});
@@ -666,14 +897,22 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
   function render(no,name,blob,w,h){
     var url=URL.createObjectURL(blob);
     var where="";
-    if(rows()===2&&cols()===1){ where=(no===1)?" 上半分":" 下半分"; }
+    if(rows()===2&&cols()===1){ where=(no===1)?"top":"bottom"; }
     var card=document.createElement("div");
     card.className="piece"; card.style.order=no;
+    card.setAttribute("data-no",no); card.setAttribute("data-where",where);
     card.innerHTML=
-      '<figure><img src="'+url+'" alt="'+no+'枚目"></figure>'+
-      '<div class="piece-meta"><span class="no">'+no+where+'</span><span class="px">'+w+' × '+h+' px</span></div>'+
-      '<a class="save" download="'+name+'" href="'+url+'">この1枚を保存</a>';
+      '<figure><img src="'+url+'"></figure>'+
+      '<div class="piece-meta"><span class="no"></span><span class="px">'+w+' × '+h+' px</span></div>'+
+      '<a class="save" download="'+name+'" href="'+url+'"></a>';
+    pieceText(card);
     $("pieces").appendChild(card);
+  }
+  function pieceText(card){
+    var no=card.getAttribute("data-no"), where=card.getAttribute("data-where");
+    card.querySelector("img").setAttribute("alt",t("pieceAlt",{n:no}));
+    card.querySelector(".no").textContent=no+(where?t(where):"");
+    card.querySelector(".save").textContent=t("saveOne");
   }
 
   /* ZIP（無圧縮・格納のみ） */
@@ -707,8 +946,8 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
 
   $("zipBtn").addEventListener("click",function(){
     if(!pieces.length)return;
-    var btn=this, label=btn.textContent;
-    btn.textContent="準備中…"; btn.disabled=true;
+    var btn=this;
+    btn.textContent=t("zipBusy"); btn.disabled=true;
     var list=[], i=0;
     (function next(){
       if(i>=pieces.length){
@@ -716,7 +955,7 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
         a.href=URL.createObjectURL(makeZip(list));
         a.download=baseName+"_split.zip";
         document.body.appendChild(a); a.click(); a.remove();
-        btn.textContent=label; btn.disabled=false;
+        btn.textContent=t("zip"); btn.disabled=false;
         return;
       }
       var p=pieces[i++];
@@ -727,6 +966,25 @@ footer{margin-top:2.8rem;font-size:.8rem;color:var(--steel);letter-spacing:.02em
     })();
   });
 
+  /* 言語の切替。画像・設定・切り上がりはそのまま残し、文章だけ差し替える */
+  function setLang(next,save){
+    if(next!=="ja"&&next!=="en"){return;}
+    lang=next;
+    if(save){ try{localStorage.setItem(LANG_KEY,lang);}catch(e){} }
+    applyStaticText();
+    showSrcInfo();
+    updateHint(); drawLines(); updateOffset();
+    var cards=document.querySelectorAll("#pieces .piece");
+    for(var i=0;i<cards.length;i++){pieceText(cards[i]);}
+    if($("zipBtn").disabled){$("zipBtn").textContent=t("zipBusy");}
+  }
+  var langBtns=document.querySelectorAll("[data-lang]");
+  for(var li=0;li<langBtns.length;li++){
+    langBtns[li].addEventListener("click",function(){setLang(this.getAttribute("data-lang"),true);});
+  }
+
+  lang=readLang();
+  if(lang!=="ja"){applyStaticText();}
   applyPreset();
   syncRadios();
 })();
